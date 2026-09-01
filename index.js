@@ -1,11 +1,12 @@
 const express = require('express');
-const axios = require('axios');
+const Parser = require('rss-parser');
 const app = express();
+const parser = new Parser();
 
-// Define Reddit API URL
-const redditUrl = 'https://reddit.com/r/LaptopDeals/new.json';
+// RSS feed for r/LaptopDeals
+const REDDIT_RSS_URL = 'https://www.reddit.com/r/LaptopDeals/new/.rss';
 
-// Define middleware to set CORS headers
+// Middleware to set CORS headers
 app.use((req, res, next) => {
     res.setHeader("Access-Control-Allow-Origin", "*");
     res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE");
@@ -13,25 +14,22 @@ app.use((req, res, next) => {
     next();
 });
 
-// Define route to fetch data from Reddit
+// Route to fetch deals
 app.get('/', async (req, res) => {
     try {
-        // Fetch data from Reddit API with User-Agent header
-        const response = await axios.get(redditUrl, {
-            headers: {
-                'User-Agent': 'LaptopDeals/1.0 (by /u/-DarkSpark-)'
-            }
-        });
-        // Extract headers and links from the response data
-        const posts = response.data.data.children.map(child => ({
-            header: child.data.title,
-            link: child.data.url
+        // Fetch and parse the RSS feed
+        const feed = await parser.parseURL(REDDIT_RSS_URL);
+
+        // Map items to match your original format
+        const posts = feed.items.map(item => ({
+            header: item.title,
+            link: item.link
         }));
-        // Send the extracted data as JSON
+
         res.json(posts);
     } catch (error) {
-        console.error('Error fetching Reddit data:', error.message);
-        res.status(500).json({ error: 'Failed to fetch Reddit data' });
+        console.error('Error fetching RSS feed:', error.message);
+        res.status(500).json({ error: 'Failed to fetch Reddit data via RSS' });
     }
 });
 
