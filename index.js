@@ -6,10 +6,17 @@ const app = express();
 const RSS2JSON_ENDPOINT = 'https://api.rss2json.com/v1/api.json?rss_url=https://www.reddit.com/r/LaptopDeals/new/.rss';
 
 // CORS Middleware
+// Updated CORS & Cache Control Middleware
 app.use((req, res, next) => {
     res.setHeader("Access-Control-Allow-Origin", "*");
     res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE");
     res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+    
+    // Prevent 304 responses by disabling caching
+    res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+    res.setHeader("Pragma", "no-cache");
+    res.setHeader("Expires", "0");
+    
     next();
 });
 
