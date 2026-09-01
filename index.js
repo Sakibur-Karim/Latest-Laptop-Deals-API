@@ -1,7 +1,13 @@
 const express = require('express');
 const Parser = require('rss-parser');
 const app = express();
-const parser = new Parser();
+
+// Pass a custom User-Agent to prevent Reddit 429 rate-limiting
+const parser = new Parser({
+    headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36'
+    }
+});
 
 // RSS feed for r/LaptopDeals
 const REDDIT_RSS_URL = 'https://www.reddit.com/r/LaptopDeals/new/.rss';
@@ -29,7 +35,7 @@ app.get('/', async (req, res) => {
         res.json(posts);
     } catch (error) {
         console.error('Error fetching RSS feed:', error.message);
-        res.status(500).json({ error: 'Failed to fetch Reddit data via RSS' });
+        res.status(500).json({ error: 'Failed to fetch Reddit data via RSS', details: error.message });
     }
 });
 
