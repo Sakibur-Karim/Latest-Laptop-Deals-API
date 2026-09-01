@@ -1,18 +1,11 @@
 const express = require('express');
-const Parser = require('rss-parser');
+const axios = require('axios');
 const app = express();
 
-// Pass a custom User-Agent to prevent Reddit 429 rate-limiting
-const parser = new Parser({
-    headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36'
-    }
-});
+// Use rss2json proxy API to bypass Reddit's Render IP block
+const RSS2JSON_ENDPOINT = 'https://api.rss2json.com/v1/api.json?rss_url=https://www.reddit.com/r/LaptopDeals/new/.rss';
 
-// RSS feed for r/LaptopDeals
-const REDDIT_RSS_URL = 'https://www.reddit.com/r/LaptopDeals/new/.rss';
-
-// Middleware to set CORS headers
+// CORS Middleware
 app.use((req, res, next) => {
     res.setHeader("Access-Control-Allow-Origin", "*");
     res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE");
@@ -23,19 +16,18 @@ app.use((req, res, next) => {
 // Route to fetch deals
 app.get('/', async (req, res) => {
     try {
-        // Fetch and parse the RSS feed
-        const feed = await parser.parseURL(REDDIT_RSS_URL);
+        const response = await axios.get(RSS2JSON_ENDPOINT);
 
-        // Map items to match your original format
-        const posts = feed.items.map(item => ({
+        // Transform the items into your format
+        const posts = response.data.items.map(item => ({
             header: item.title,
             link: item.link
         }));
 
         res.json(posts);
     } catch (error) {
-        console.error('Error fetching RSS feed:', error.message);
-        res.status(500).json({ error: 'Failed to fetch Reddit data via RSS', details: error.message });
+        console.error('Error fetching via proxy:', error.message);
+        res.status(500).json({ error: 'Failed to fetch deals', details: error.message });
     }
 });
 
